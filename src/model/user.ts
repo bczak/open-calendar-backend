@@ -1,32 +1,20 @@
-import {Document, model, Model, Schema, Types} from "mongoose";
+import mongoose from "mongoose";
 
-export interface IUser {
+const UserSchema = new mongoose.Schema({
+	mail: String,
 	first_name: String,
 	last_name: String,
-	username: String,
-	password: String,
-	google_id: Number,
-	google_mail: String,
-	mail: String
-}
-
-interface IUserDocument extends IUser, Document {
-
-}
-
-interface IUserModel extends Model<IUserDocument> {
-}
-
-const UserSchema = new Schema({
-	first_name: String,
-	last_name: String,
-	username: String,
-	password: String,
-	google_id: Number,
-	google_mail: String,
-	mail: String
+	password: {
+		type: String,
+		required: false
+	},
+	google_mail: {
+		type: String,
+		required: false
+	},
+	google_id: {
+		type: String,
+		required: false
+	},
 });
-
-const UserModel = model<IUserDocument>("user", UserSchema);
-
-export default UserModel;
+export const User = mongoose.model("User", UserSchema)

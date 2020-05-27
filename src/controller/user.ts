@@ -1,19 +1,16 @@
 import * as express from 'express'
-import * as passport from 'passport'
+import passport from 'passport'
+import {User} from '../model/user'
+import {getRandomName} from "../utils";
 
 class UserController {
-	public static routes(app: express.Application): void {
-		// returns current user
-		app.route('/api/user/')
-			.get(async (req: express.Request, res: express.Response) => {
-				// @ts-ignore
-				if(req.isAuthenticated()) {
-					// @ts-ignore
-					return res.status(200).json({user: req.currentUser });
-				} else {
-					return res.status(401).json({error: 'Unauthorized', code: 401})
-				}
-			})
+	public static config(app: express.Application) {
+		app.route('/api/user').get((req, res) => {
+			if (req.user === undefined) {
+				req.user = {mail: 'anonymous'}
+			}
+			return res.status(200).json({user: req.user})
+		})
 	}
 }
 

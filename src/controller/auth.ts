@@ -1,57 +1,25 @@
 import * as express from 'express'
-import * as passport from 'passport'
-import conf from "../../conf";
-import UserModel from "../model/user";
-import {Strategy} from 'passport-google-oauth20'
+import passport from "passport";
 
 class AuthController {
-	
-	public static googleAuth() {
-		passport.serializeUser(function (user, done) {
-			done(null, user);
-		});
+	public static config(app: express.Application) {
+		app.route('/auth/logout').get(async (req, res) => {
+			await req.logout();
+			return res.redirect('/api/user')
+		})
+		app.route('/auth/google/login').get(passport.authenticate('google', {scope: ['email', 'profile']}))
+		app.route('/auth/google/callback').get(passport.authenticate('google', {failureRedirect: '/login'}), (req, res) => {
+			res.redirect('/api/user')
+		})
+		app.route('/auth/mail/login').post(passport.authenticate('local', {failureRedirect: '/auth/mail/login'}), (req, res) => {
+			res.redirect('/api/user')
+		})
 		
-		passport.deserializeUser(function (user, done) {
-			done(null, user);
-		});
-		passport.use(new Strategy({
-				clientID: conf.CLIENT_ID,
-				clientSecret: conf.CLIENT_SECRET,
-				callbackURL: conf.DOMAIN + '/auth/google/callback'
-			},
-			async (access, refresh, profile, cb) => {
-				let user: any = UserModel.find({google_id: profile.id})
-				if (user) {
-					user = {
-						mail: profile.emails[0].value,
-						google_mail: profile.emails[0].value,
-						google_id: Number(profile.id),
-						first_name: profile.name.givenName,
-						last_name: profile.name.familyName,
-					}
-					await UserModel.create(user)
-					return cb(null, user)
-					
-				}
-			}))
-	}
-	
-	public static routes(app: express.Application) {
-		app.route('/auth/google/login')
-			.get(passport.authenticate('google', {scope: ['profile', 'email']}));
+		app.route('/auth/mail/login').get((req, res) => {
+			res.sendFile(__dirname.substr(0, __dirname.length - 10) + '/static/login.html')
+		})
 		
-		app.route('/auth/google/logout').get(async (req, res) => {
-			// @ts-ignore
-			req.logout();
-			res.redirect('/')
-		});
-		
-		app.route('/auth/google/callback').get(passport.authenticate('google', {failureRedirect: '/auth/google/login'}),
-			async function (req, res) {
-				// @ts-ignore
-				return res.redirect('/api/user');
-			});
 	}
 }
 
-export default AuthController
+export default AuthController;
