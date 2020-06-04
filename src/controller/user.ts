@@ -1,14 +1,10 @@
 import * as express from 'express'
-import passport from 'passport'
-import {User} from '../model/user'
-import {getRandomName} from "../utils";
+import UserService from "../service/user";
 
 class UserController {
 	public static config(app: express.Application) {
-		app.route('/api/user').get((req, res) => {
-			if (req.user === undefined) {
-				req.user = {mail: 'anonymous'}
-			}
+		app.route('/api/user').get(async (req, res) => {
+			req.user = await UserService.getUser(req.user)
 			return res.status(200).json({user: req.user})
 		})
 	}

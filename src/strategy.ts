@@ -1,6 +1,6 @@
 import * as Google from "passport-google-oauth20";
 import {CLIENT_ID, CLIENT_SECRET, DOMAIN} from "./conf";
-import {User} from "./model/user";
+import User from "./model/user";
 import * as Local from "passport-local";
 import {getRandomName} from "./utils";
 import validator from "validator";
@@ -21,26 +21,25 @@ export const GoogleStrategy = new Google.Strategy(
 				google_mail: profile._json.email,
 				first_name: profile.name?.givenName,
 				last_name: profile.name?.familyName,
-				mail: profile._json.email
 			}
 			await User.create(user)
 		}
 		
 		cb(null, {
+			_id: user._id,
 			google_id: profile._json.sub,
 			google_mail: profile._json.email,
 			first_name: profile.name?.givenName,
-			last_name: profile.name?.familyName,
-			mail: profile._json.email
+			last_name: profile.name?.familyName
 		})
 	}
 )
 
 export const LocalStrategy = new Local.Strategy({
+		passReqToCallback: true,
 		session: false
 	},
-	async (username, password, done) => {
-		console.log(username, password);
+	async (req, username, password, done) => {
 		if (!validator.isEmail(username)) {
 			return done(null, false, {message: 'Email is wrong format'})
 		}
@@ -55,13 +54,11 @@ export const LocalStrategy = new Local.Strategy({
 				last_name: name[1],
 				mail: username,
 				password: await argon2.hash(password)
-				
 			}
 			await User.create(user);
 		}
-		
-		
 		return done(null, {
+			_id: user._id,
 			first_name: user.first_name,
 			last_name: user.last_name,
 			mail: username
