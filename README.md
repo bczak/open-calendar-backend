@@ -107,6 +107,7 @@ This capitol represents all methods to interact with models.
 ```GET /api/calendar``` - return array of all calendars of signed [User](#User)
 ```POST /api/calendar``` - create new calendar
 ```PUT /api/calendar/{id}``` - update existed calendar by id
+```DELETE /api/calendar/{id}``` - delete existed calendar by id
 
 ### Event
 

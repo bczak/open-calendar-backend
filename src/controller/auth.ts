@@ -9,6 +9,7 @@ class AuthController {
     })
     app.route('/auth/google/login').get(passport.authenticate('google', { scope: ['email', 'profile'] }))
     app.route('/auth/google/callback').get(passport.authenticate('google', { failureRedirect: '/auth/mail/login' }), (req, res) => {
+      // @ts-ignore
       res.redirect('/app')
     })
     app.route('/auth/mail/login').post(passport.authenticate('local', { failureMessage: true }), (req, res) => {

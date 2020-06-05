@@ -10,6 +10,8 @@ import AuthController from "./controller/auth";
 import UserController from "./controller/user";
 import { GoogleStrategy, LocalStrategy } from "./strategy";
 import CalendarController from "./controller/calendar";
+import EventController from "./controller/event";
+import User from "./model/user";
 
 class Server {
   public app: Application;
@@ -31,7 +33,8 @@ class Server {
       console.log('Could not connect to MongoDB')
     }
     console.log("Connected")
-
+    // insert global anonymous user
+    await User.updateOne({mail: 'anonymous'}, {$set: {mail: 'anonymous'}}, {upsert: true})
     //Allows us to receive requests with data in json format
     this.app.use(bodyParser.json({ limit: '50mb' }));
 
@@ -48,6 +51,10 @@ class Server {
 
     this.app.use(passport.initialize());
     this.app.use(passport.session());
+    this.app.use((req, res, next) => {
+      console.log(req.method + " request from " + JSON.stringify(req.user) + " at " + Date.now() )
+      return next();
+    })
 
     //Enables Google and Mail Auth
     passport.use(GoogleStrategy);
@@ -59,6 +66,8 @@ class Server {
     AuthController.config(this.app)
     UserController.config(this.app)
     CalendarController.config(this.app)
+    EventController.config(this.app)
+    
   }
 }
 
