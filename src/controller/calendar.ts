@@ -60,9 +60,12 @@ class CalendarController {
       }
       let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0')).populate('events')
       if (!calendar) return res.status(404).json({ error: 'Calendar does not exist or you do not have access to read it' })
-      if (!calendar || MemberService.isMember(user, calendar)) {
+      console.log(1);
+      
+      if (!calendar || !(await MemberService.isMember(user, calendar))) {
         return res.status(404).json({ error: 'Calendar does not exist or you do not have access to read it' })
       }
+      
       let events = calendar.events
       events = events.map((e: any) => {
         e.start = moment(e.start).add(getOffset(calendar.timezone), "minutes").toISOString()
@@ -81,7 +84,7 @@ class CalendarController {
       }
       let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0'))
       if (!calendar) return res.status(404).json({ error: 'Calendar does not exist or you do not have access to delete it' })
-      if (!calendar || MemberService.isMember(user, calendar)) {
+      if (!calendar ||!( await MemberService.isMember(user, calendar))) {
         return res.status(404).json({ error: 'Calendar does not exist or you do not have access to delete it' })
       }
       await Calendar.deleteOne({ _id: calendar._id })

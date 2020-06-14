@@ -14,7 +14,7 @@ export const GoogleStrategy = new Google.Strategy(
     callbackURL: DOMAIN + '/auth/google/callback'
   },
   async (accessToken: String, refreshToken: String, profile: Google.Profile, cb: any) => {
-    let user: any = await User.findOne({ google_id: profile.id })
+    let user: any = await User.findOne({ google_mail: profile._json.email })
     if (user == null) {
       user = {
         google_mail: profile._json.email,
@@ -57,8 +57,8 @@ export const LocalStrategy = new Local.Strategy({
       })
       await user.save();
     }
-    console.log(user);
-    
+    console.log(user._id);
+
     return done(null, {
       _id: user._id,
       first_name: user.first_name,

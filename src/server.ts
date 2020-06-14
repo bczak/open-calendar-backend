@@ -36,7 +36,7 @@ class Server {
     }
     console.log("Connected")
     // insert global anonymous user
-    await User.updateOne({mail: 'anonymous'}, {$set: {mail: 'anonymous'}}, {upsert: true})
+    await User.updateOne({ mail: 'anonymous' }, { $set: { mail: 'anonymous' } }, { upsert: true })
     //Allows us to receive requests with data in json format
     this.app.use(bodyParser.json({ limit: '50mb' }));
 
@@ -53,9 +53,12 @@ class Server {
 
     this.app.use(passport.initialize());
     this.app.use(passport.session());
-    this.app.use((req, res, next) => {
-      console.log(req.method + " request from " + JSON.stringify(req.user) + " at " + Date.now() )
-      return next();
+    this.app.use(async (req, res, next) => {
+      let time = Date.now();
+      let user: any = req.user || { mail: 'anonymous' };
+      await next();
+      console.log(req.method + " request from " + JSON.stringify(user) + " took " + (Date.now() - time) + "ms");
+
     })
 
     //Enables Google and Mail Auth
@@ -64,16 +67,17 @@ class Server {
     passport.serializeUser((user, cb) => cb(null, user));
     passport.deserializeUser((obj, cb) => cb(null, obj));
 
-    this.app.use('/',express.static('src/static/app') )
-		this.app.use('/app', express.static('src/static/app'))
-    this.app.use('/app:*',  express.static('src/static/app'))
+    this.app.use('/', express.static('src/static/app'))
+    this.app.use('/app', express.static('src/static/app'))
+    this.app.use('/app:*', express.static('src/static/app'))
+
     
     //Add controllers
     AuthController.config(this.app)
     UserController.config(this.app)
     CalendarController.config(this.app)
     EventController.config(this.app)
-    
+
   }
 }
 

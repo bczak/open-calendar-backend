@@ -36,7 +36,6 @@ export default class CalendarService {
     let members = [user]
     // add anonymous people to members if calendar is public
     if (user.mail != 'anonymous' && cal.type === true) {
-
       let anon = await User.findOne({ mail: 'anonymous' })
       //@ts-ignore
       let mem = new Member({ user: anon._id, calendar: calendar.id })
@@ -70,7 +69,6 @@ export default class CalendarService {
 
   public static async addEvent(cal: any, event: any, user: any): Promise<any> {
     let notes = event.notes || [];
-    console.log(event)
     if (notes.length > 0) {
       notes = notes.filter((e: any) => e.length > 0).map((e: any) => {
         let tmp: any = {}
@@ -84,8 +82,8 @@ export default class CalendarService {
     if (!event.title) return null;
     event.title = sanitizer.escape(event.title)
     event.location = sanitizer.escape(event.location)
-    event.color = sanitizer.escape(event.color)
-    if (!event.startDate) return null;
+    event.color = sanitizer.escape(event.color) || '#0088cc'
+    if (!event.start) return null;
     event.start = new Date(event.start)
 
     if (!event.end) return null;
@@ -98,9 +96,22 @@ export default class CalendarService {
     await new History({ user: user, calendar: { _id: cal._id }, event: event, status: 'created' }).save()
     return obj
   }
-  public static async updateEvent(event: any, user: any): Promise<any> {
+  public static async deleteEvent(event_id: any, cal_id: any, user: any): Promise<any> {
+    let cal = await Calendar.findOne({_id: cal_id, events: {_id: event_id}})
+    
+    if(!cal ) return {error: "Event does not exist"}
+    await Calendar.updateOne({_id: cal_id}, {$pull: {events: event_id}})
+    await Event.deleteOne({_id: event_id})    
+  }
+  public static async updateEvent(event: any, cal_id: any, user: any): Promise<any> {
+
+    let cal = await Calendar.findOne({_id: cal_id, events: {_id: event._id}})
+    if(!cal ) return {error: 'Event does not exist'}
+    
+    let old: any= await Event.findOne({_id: event._id})
+    if(!old) return {error: 'Event does not exist'};
+
     let notes = event.notes || [];
-    console.log(event)
     if (notes.length > 0) {
       notes = notes.filter((e: any) => e.length > 0).map((e: any) => {
         let tmp: any = {}
@@ -109,28 +120,21 @@ export default class CalendarService {
         return tmp
       })
     }
-
-    event.notes = notes;
+    old.notes = notes;
     if (!event.title) return null;
-    event.title = sanitizer.escape(event.title)
-    event.location = sanitizer.escape(event.location)
-    event.color = sanitizer.escape(event.color)
-    if (!event.startDate) return null;
-    event.start = new Date(event.startDate)
+    old.title = sanitizer.escape(event.title)
+    old.location = sanitizer.escape(event.location)
+    old.color = sanitizer.escape(event.color)
+    if (!event.start) return null;
+    old.start = new Date(event.start)
 
     if (!event.end) return null;
-    event.end = new Date(event.end)
-    if (event.start > event.end) return { error: 'Start Date cannot be later than End Date' }
-    let obj = new Event(event);
-    // @ts-ignore
-    let cal: any = await Calendar.findOne({ events: { _id: event._id } })
-
-    await Calendar.updateOne({ _id: cal._id }, { $pull: { events: {_id: event._id }} })
-    await Calendar.updateOne({ _id: cal._id }, { $push: { events: obj } })
-    await obj.save();
-    console.log(obj);
+    old.end = new Date(event.end)
+    if (old.start > old.end) return { error: 'Start Date cannot be later than End Date' }
     
-    await new History({ user: user, event: event, status: 'updated' }).save()
-    return obj
+    await Event.updateOne({_id: old._id}, {$set: old})
+    
+
+    return old
   }
 }

@@ -110,6 +110,7 @@ This capitol represents all methods to interact with models.
 ### User
 ```GET /api/user``` - return current logged [User](#User)
 ```GET /api/user/{id}``` - return user by given id
+```POST /api/user``` - change user first or last name. Must be logged in
 
 ### Calendar
 
