@@ -78,6 +78,14 @@ Example of **Calendar**
 ### Event
 This object represents event.
 
+|Field|Type|Description|
+|-----|----|-----------|
+|title|String|Event's title|
+|start|Date|Start of event|
+|end|Date|End of event|
+|color|String|Optional. Color of event - hash(#00ff00) or word(green) |
+|notes|Array of Note|Optional. Notes of event|
+|repeat|String|Optional. Can be "day","week","month","year" or empty string.|
 
 ### Note
 
@@ -101,23 +109,40 @@ This capitol represents all methods to interact with models.
 
 ### User
 ```GET /api/user``` - return current logged [User](#User)
+```GET /api/user/{id}``` - return user by given id
 
 ### Calendar
 
-```GET /api/calendar``` - return array of all calendars of signed [User](#User)
+```GET /api/calendar``` - return array of all calendars of signed [User](#User). In case of anonymous user, returns empty array
+
+```GET /api/calendar/{id}``` - return the calendar based on id
+
 ```POST /api/calendar``` - create new calendar
+
 ```PUT /api/calendar/{id}``` - update existed calendar by id
+
 ```DELETE /api/calendar/{id}``` - delete existed calendar by id
 
 ### Event
 
-### Note
+```GET /api/event/{id}``` - return array of events in calendar found by id of calendar
+
+```POST /api/event/{id}``` - create event in the calendar found by id of calendar
+
+```PUT /api/event/{id}/{event_id}``` - update existing event by id of calendar and event_id 
+
+```DELETE /api/event/{id}/{event_id}``` - delete existing event by id of calendar and event
+
 
 ## Other
+### Inviting 
+You can invite/ban people to your calendar by calling:
+
+```POST /api/invite/{mail}```
 ### Timezone
 
 As far as Open Calendar using [moment.js](https://momentjs.com) all timezones are taken from IANA list of timezone 
 
 
 ### API Limits
-You can only create 5 calendars from one IP in 1 hour, then you start catching 429 error.
+You can only create 5 calendars from one IP in 1 hour, then you start catching error.

@@ -10,7 +10,7 @@ const EventSchema = new mongoose.Schema({
 		text: String,
 		user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
 	}],
-	repeat: String
+	repeat: {type: String, default: ''}
 })
 
 const Event = mongoose.model('Event', EventSchema)

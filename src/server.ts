@@ -12,6 +12,7 @@ import { GoogleStrategy, LocalStrategy } from "./strategy";
 import CalendarController from "./controller/calendar";
 import EventController from "./controller/event";
 import User from "./model/user";
+import process from 'process'
 
 class Server {
   public app: Application;
@@ -31,6 +32,7 @@ class Server {
       });
     } catch (e) {
       console.log('Could not connect to MongoDB')
+      process.exit(-1);
     }
     console.log("Connected")
     // insert global anonymous user
@@ -62,6 +64,10 @@ class Server {
     passport.serializeUser((user, cb) => cb(null, user));
     passport.deserializeUser((obj, cb) => cb(null, obj));
 
+    this.app.use('/',express.static('src/static/app') )
+		this.app.use('/app', express.static('src/static/app'))
+    this.app.use('/app:*',  express.static('src/static/app'))
+    
     //Add controllers
     AuthController.config(this.app)
     UserController.config(this.app)
