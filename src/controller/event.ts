@@ -21,7 +21,11 @@ export default class EventController {
       let user = req.user
       let calendar: any = await Calendar.findById(req.params.id)
       if (!calendar) return res.status(401).json({ error: 'Calendar does not exist or has private access' })
+      console.log(calendar, user);
+      
       let member = await CalendarService.getMember(calendar, user);
+      console.log(member);
+      
       if (!member) {
         return res.status(401).json({ error: 'Calendar does not exist or has private access' })
       } else if (!member.canCreate) {
@@ -31,8 +35,10 @@ export default class EventController {
     })
     app.route('/api/event/:id')
       .post(async (req, res) => {
+        console.log(req.body);
+        
         let calendar: any = await Calendar.findById(req.params.id)
-        let result = await CalendarService.addEvent(calendar, req.body, (await UserService.getUser(req.user)));
+        let result = await CalendarService.addEvent(calendar, req.body, req.user);
 
         if (result == null) return res.status(400).json({ error: 'Event must have title, start date and end date' })
         res.status(201).json(result);
@@ -41,6 +47,7 @@ export default class EventController {
         let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0')).populate('events')
         return res.status(200).json(calendar.events)
       })
+    // update event
     app.route('/api/event/:id/:event')
       .put(async (req, res) => {
         if (req.params.event && !req.params.event.match(/^[0-9a-fA-F]{24}$/)) {
@@ -49,7 +56,7 @@ export default class EventController {
         }
         req.body._id = req.params.event;
 
-        let event: any = await CalendarService.updateEvent(req.body, req.params.id, (await UserService.getUser(req.user)));
+        let event: any = await CalendarService.updateEvent(req.body, req.params.id, req.user);
 
         if (event == null) return res.status(400).json({ error: 'Event must have title, start date and end date' })
         res.status(200).json(event)
@@ -60,7 +67,7 @@ export default class EventController {
           return res.status(404).json({ error: 'Event does not exist' })
         }
 
-        let result = await CalendarService.deleteEvent(req.params.event, req.params.id, (await UserService.getUser(req.user)))
+        let result = await CalendarService.deleteEvent(req.params.event, req.params.id, req.user)
         if (result) return res.status(404).json(result)
         return res.status(204).send()
       })

@@ -109,8 +109,10 @@ This capitol represents all methods to interact with models.
 
 ### User
 ```GET /api/user``` - return current logged [User](#User)
+
 ```GET /api/user/{id}``` - return user by given id
-```POST /api/user``` - change user first or last name. Must be logged in
+
+```PUT /api/user``` - change user first or last name. Must be logged in
 
 ### Calendar
 
@@ -137,9 +139,9 @@ This capitol represents all methods to interact with models.
 
 ## Other
 ### Inviting 
-You can invite/ban people to your calendar by calling:
+You can invite/ban people to your calendar by RESTing:
 
-```POST /api/invite/{mail}```
+```POST /api/invite/{id}/{mail}``` - where id is id of calendar
 ### Timezone
 
 As far as Open Calendar using [moment.js](https://momentjs.com) all timezones are taken from IANA list of timezone 

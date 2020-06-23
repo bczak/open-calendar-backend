@@ -4,7 +4,8 @@
   "description": "Open Calendar Backend",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "start": "ts-node ."
   },
   "repository": {
     "type": "git",

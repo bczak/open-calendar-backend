@@ -3,10 +3,28 @@ import Calendar from '../model/calendar'
 import Member from "../model/member";
 import History from '../model/history'
 import Event from '../model/event'
-import UserService from "./user";
 import sanitizer from "sanitizer";
 
 export default class CalendarService {
+  public static async addMember(mail: String, calendar: any) {
+    let user: any = await User.findOne({google_mail: mail})
+    
+    if(user == null) {
+      user = await User.findOne({mail: mail}, {mail: 1, first_name: 1, last_name: 1})
+    }
+    
+    if(user == null) {
+      return null;
+    }
+    let old = await Member.findOne({calendar: calendar._id, user: user._id});
+    if(old != null) return {};
+    let mem = new Member({
+      calendar: calendar._id,
+      user: user._id,
+    })
+    await mem.save();
+    return user;
+  }
   public static async getCalendars(user: any): Promise<Array<any>> {
     // try google user
     let extUser = await User.findOne({ google_mail: user.mail })
@@ -63,7 +81,7 @@ export default class CalendarService {
   }
 
   public static async getMember(cal: any, user: any): Promise<any> {
-    user = await UserService.getUser(user);
+
     return Member.findOne({ user: user._id, calendar: cal._id });
   }
 
@@ -97,19 +115,19 @@ export default class CalendarService {
     return obj
   }
   public static async deleteEvent(event_id: any, cal_id: any, user: any): Promise<any> {
-    let cal = await Calendar.findOne({_id: cal_id, events: {_id: event_id}})
-    
-    if(!cal ) return {error: "Event does not exist"}
-    await Calendar.updateOne({_id: cal_id}, {$pull: {events: event_id}})
-    await Event.deleteOne({_id: event_id})    
+    let cal = await Calendar.findOne({ _id: cal_id, events: { _id: event_id } })
+
+    if (!cal) return { error: "Event does not exist" }
+    await Calendar.updateOne({ _id: cal_id }, { $pull: { events: event_id } })
+    await Event.deleteOne({ _id: event_id })
   }
   public static async updateEvent(event: any, cal_id: any, user: any): Promise<any> {
 
-    let cal = await Calendar.findOne({_id: cal_id, events: {_id: event._id}})
-    if(!cal ) return {error: 'Event does not exist'}
-    
-    let old: any= await Event.findOne({_id: event._id})
-    if(!old) return {error: 'Event does not exist'};
+    let cal = await Calendar.findOne({ _id: cal_id, events: { _id: event._id } })
+    if (!cal) return { error: 'Event does not exist' }
+
+    let old: any = await Event.findOne({ _id: event._id })
+    if (!old) return { error: 'Event does not exist' };
 
     let notes = event.notes || [];
     if (notes.length > 0) {
@@ -131,9 +149,9 @@ export default class CalendarService {
     if (!event.end) return null;
     old.end = new Date(event.end)
     if (old.start > old.end) return { error: 'Start Date cannot be later than End Date' }
-    
-    await Event.updateOne({_id: old._id}, {$set: old})
-    
+
+    await Event.updateOne({ _id: old._id }, { $set: old })
+
 
     return old
   }

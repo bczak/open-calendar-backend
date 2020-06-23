@@ -5,6 +5,7 @@ import * as Local from "passport-local";
 import { getRandomName } from "./utils";
 import validator from "validator";
 import * as argon2 from "argon2";
+import UserService from "./service/user";
 
 
 export const GoogleStrategy = new Google.Strategy(
@@ -15,6 +16,7 @@ export const GoogleStrategy = new Google.Strategy(
   },
   async (accessToken: String, refreshToken: String, profile: Google.Profile, cb: any) => {
     let user: any = await User.findOne({ google_mail: profile._json.email })
+    
     if (user == null) {
       user = {
         google_mail: profile._json.email,
@@ -22,11 +24,12 @@ export const GoogleStrategy = new Google.Strategy(
         last_name: profile.name?.familyName,
       }
       await User.create(user)
+      user = await User.findOne({ google_mail: profile._json.email }, { google_mail: 1, first_name: 1, last_name: 1 })
     }
 
     cb(null, {
       _id: user._id,
-      google_mail: profile._json.email,
+      google_mail: user.google_mail,
       first_name: profile.name?.givenName,
       last_name: profile.name?.familyName
     })

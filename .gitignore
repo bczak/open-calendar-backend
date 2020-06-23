@@ -106,3 +106,4 @@ dist
 .idea/
 
 conf.ts
+data/

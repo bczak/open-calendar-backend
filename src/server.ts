@@ -2,7 +2,7 @@ import express, { Application } from 'express'
 import bodyParser from "body-parser";
 import cors from 'cors';
 import mongoose from "mongoose";
-import { CLIENT_ID, CLIENT_SECRET, DOMAIN, MONGO } from "./conf";
+import { CLIENT_ID, CLIENT_SECRET, MONGO } from "./conf";
 import passport from "passport";
 import cookieParser from 'cookie-parser'
 import session from 'express-session'
@@ -11,6 +11,8 @@ import UserController from "./controller/user";
 import { GoogleStrategy, LocalStrategy } from "./strategy";
 import CalendarController from "./controller/calendar";
 import EventController from "./controller/event";
+import InviteController from "./controller/invite";
+import UserService from './service/user'
 import User from "./model/user";
 import process from 'process'
 
@@ -19,8 +21,12 @@ class Server {
 
   constructor() {
     this.app = express();
-    this.config().then(null)
+    this.config().then(null).catch((e) => {
+      console.log(e);
+      process.exit(-1)
+    })
   }
+
 
   private async config() {
     //Connect to MongoDB
@@ -31,8 +37,7 @@ class Server {
         useUnifiedTopology: true
       });
     } catch (e) {
-      console.log('Could not connect to MongoDB')
-      process.exit(-1);
+      throw new Error('Could not connect to MongoDB')
     }
     console.log("Connected")
     // insert global anonymous user
@@ -54,15 +59,20 @@ class Server {
     this.app.use(passport.initialize());
     this.app.use(passport.session());
     this.app.use(async (req, res, next) => {
+      //interceptors
       let time = Date.now();
-      let user: any = req.user || { mail: 'anonymous' };
+      req.user = await UserService.getUser(req.user) || req.user;
       await next();
-      console.log(req.method + " request from " + JSON.stringify(user) + " took " + (Date.now() - time) + "ms");
+      console.log(req.method + " request from " + JSON.stringify(req.user) + " took " + (Date.now() - time) + "ms");
 
     })
 
     //Enables Google and Mail Auth
-    passport.use(GoogleStrategy);
+    //@ts-ignore
+    if (CLIENT_SECRET != '') {
+      //disable google auth if there is no credentials
+      passport.use(GoogleStrategy);
+    }
     passport.use('local', LocalStrategy);
     passport.serializeUser((user, cb) => cb(null, user));
     passport.deserializeUser((obj, cb) => cb(null, obj));
@@ -71,12 +81,13 @@ class Server {
     this.app.use('/app', express.static('src/static/app'))
     this.app.use('/app:*', express.static('src/static/app'))
 
-    
+
     //Add controllers
     AuthController.config(this.app)
     UserController.config(this.app)
     CalendarController.config(this.app)
     EventController.config(this.app)
+    InviteController.config(this.app)
 
   }
 }

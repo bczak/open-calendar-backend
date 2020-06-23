@@ -31,7 +31,7 @@ class CalendarController {
       if (req.user == undefined && !req.body.type) {
         return res.status(400).json({ error: 'Only registered users can change type of calendars' })
       }
-      let user: any = await UserService.getUser(req.user)
+      let user: any = req.user
       let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0'))
       let members: Array<any> = await CalendarService.getMembers(calendar._id)
       if (!calendar || members.filter(e => e.user.toString() == user._id.toString()).length <= 0 || (!calendar.type && user.mail == 'anonymous')) {
@@ -40,32 +40,30 @@ class CalendarController {
       await CalendarService.removeAnonymous(calendar);
       calendar = await CalendarService.updateCalendar(calendar, req.body, user);
       // remove anonymous member from calndar if type was changed
-      return res.status(200).json(calendar);
+        return res.status(200).json(calendar);
 
     })
     app.post('/api/calendar', createCalendarLimiter, async (req, res) => {
       if (req.user == undefined && !req.body.type) {
         return res.status(400).json({ error: 'Only registered users can create private calendars' })
       }
-      let user = await UserService.getUser(req.user) || req.user
+      let user = req.user
       req.body.title = sanitizer.escape(req.body.title)
       req.body.timezone = getTimeZone(sanitizer.escape(req.body.timezone))
       let obj = await CalendarService.createCalendar(req.body, user)
       return res.status(201).json(obj)
     })
     app.get('/api/calendar/:id', async (req, res) => {
-      let user: any = await UserService.getUser(req.user)
+      let user: any = req.user
       if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
         return res.status(404).json({ error: 'Calendar does not exist' })
       }
       let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0')).populate('events')
       if (!calendar) return res.status(404).json({ error: 'Calendar does not exist or you do not have access to read it' })
-      console.log(1);
-      
-      if (!calendar || !(await MemberService.isMember(user, calendar))) {
+      if (!calendar.type && !(await MemberService.isMember(user, calendar))) {
         return res.status(404).json({ error: 'Calendar does not exist or you do not have access to read it' })
       }
-      
+
       let events = calendar.events
       events = events.map((e: any) => {
         e.start = moment(e.start).add(getOffset(calendar.timezone), "minutes").toISOString()
@@ -78,13 +76,13 @@ class CalendarController {
 
     })
     app.delete('/api/calendar/:id', async (req, res) => {
-      let user: any = await UserService.getUser(req.user)
+      let user: any = req.user
       if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
         return res.status(404).json({ error: 'Calendar does not exist' })
       }
       let calendar: any = await Calendar.findById(req.params.id.padEnd(24, '0'))
       if (!calendar) return res.status(404).json({ error: 'Calendar does not exist or you do not have access to delete it' })
-      if (!calendar ||!( await MemberService.isMember(user, calendar))) {
+      if (!calendar || !(await MemberService.isMember(user, calendar))) {
         return res.status(404).json({ error: 'Calendar does not exist or you do not have access to delete it' })
       }
       await Calendar.deleteOne({ _id: calendar._id })

@@ -5,7 +5,9 @@ const MemberScema = new mongoose.Schema({
   calendar: { type: mongoose.Schema.Types.ObjectId, ref: 'Calendar' },
   canCreate: { type: Boolean, default: true },
   canEdit: { type: Boolean, default: true },
-  canDelete: { type: Boolean, default: true }
+  canInvite: { type: Boolean, default: true },
+  canDelete: { type: Boolean, default: true },
+  
 })
 
 const Member = mongoose.model('Member', MemberScema);
